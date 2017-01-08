@@ -1,0 +1,61 @@
+package main
+
+import (
+	"fmt"
+
+	"github.com/trustmaster/goflow"
+)
+
+type Greeter struct {
+	flow.Component
+	Name <-chan string
+	Res  chan<- string
+}
+
+func (g *Greeter) OnName(name string) {
+	greeting := fmt.Sprintf("Hello, %s!", name)
+	g.Res <- greeting
+}
+
+type Printer struct {
+	flow.Component
+	Line <-chan string
+}
+
+func (p *Printer) Online(line string) {
+	fmt.Println(line)
+}
+
+type GreetingApp struct {
+	flow.Graph
+}
+
+func NewGreetingApp() *GreetingApp {
+	n := new(GreetingApp)
+	n.InitGraphState()
+	n.Add(new(Greeter), "greeter")
+	n.Add(new(Printer), "printer")
+	n.Connect("greeter", "Res", "printer", "Line")
+	n.MapInPort("In", "greeter", "Name")
+	return n
+}
+
+func main() {
+	fmt.Println("here1")
+	net := NewGreetingApp()
+	fmt.Println("here2")
+	in := make(chan string)
+	fmt.Println("here3")
+	net.SetInPort("In", in)
+	fmt.Println("here4")
+	flow.RunNet(net)
+	fmt.Println("here5")
+	in <- "John"
+	fmt.Println("here6")
+	in <- "Boris"
+	fmt.Println("here7")
+	in <- "Hanna"
+	fmt.Println("here8")
+	close(in)
+	<-net.Wait()
+}

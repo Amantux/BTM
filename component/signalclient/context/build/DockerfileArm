@@ -1,0 +1,4 @@
+FROM ubuntu
+COPY SignalClient /
+ENTRYPOINT ["/SignalClient","",""]
+EXPOSE 10002
